@@ -178,6 +178,8 @@ def frame(page_title: str, content_func: Callable):
         
         ui.label('CONFIGURATION').classes('text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2 mb-0.5 px-3 uppercase tracking-tighter')
         menu_link('Comptes Bancaires', '/accounts', 'account_balance')
+        menu_link('Catégories', '/categories', 'category')
+        menu_link('Historique', '/logs', 'history')
         menu_link('Exports', '/reports', 'download')
 
         ui.separator().classes('mt-auto my-2 opacity-50 dark:opacity-20 bg-gray-300 dark:bg-gray-500')

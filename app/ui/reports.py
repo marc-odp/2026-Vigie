@@ -6,25 +6,23 @@ from app.services.export import generate_operations_csv, generate_allocations_cs
 from sqlmodel import select
 
 def reports_page():
-     
-     def download_ops():
-         with next(get_session()) as session:
-             # Eager load refs for CSV
-             ops = session.exec(select(Operation)).all()
-             content = generate_operations_csv(ops)
-             ui.download(content.encode('utf-8'), 'operations.csv')
+    def download_ops():
+        with next(get_session()) as session:
+            # Eager load refs for CSV
+            ops = session.exec(select(Operation)).all()
+            content = generate_operations_csv(ops)
+            ui.download(content.encode('utf-8'), 'operations.csv')
 
-     def download_allocs():
-         with next(get_session()) as session:
-             allocs = session.exec(select(Allocation)).all()
-             content = generate_allocations_csv(allocs)
-             ui.download(content.encode('utf-8'), 'allocations.csv')
+    def download_allocs():
+        with next(get_session()) as session:
+            allocs = session.exec(select(Allocation)).all()
+            content = generate_allocations_csv(allocs)
+            ui.download(content.encode('utf-8'), 'allocations.csv')
 
-     def content():
+    def content():
         ui.label('Exports & Rapports').classes('text-xl font-bold mb-4')
         
         with ui.grid(columns=2).classes('w-full gap-4'):
-            
             with ui.card().classes('glass-panel hover:bg-white/5 cursor-pointer'):
                 ui.icon('table_view').classes('text-4xl text-emerald-400 mb-2')
                 ui.label('Journal des Opérations').classes('text-lg font-bold')
@@ -37,4 +35,4 @@ def reports_page():
                 ui.label('Export CSV détaille: qui paie quoi pour chaque opération.').classes('text-sm text-slate-400')
                 ui.button('Télécharger CSV', on_click=download_allocs).classes('mt-4 bg-cyan-500 w-full')
 
-     frame("Rapports", content)
+    frame("Rapports", content)

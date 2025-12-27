@@ -8,11 +8,8 @@ from typing import Optional
 from app.services.accounting import resync_lot_allocations
 
 def lots_page():
-     
-     # --- EDIT/ADD LOT DIALOG ---
-     with ui.dialog() as dialog, ui.card().classes('w-full max-w-4xl h-[90vh]'):
-        # We use a reactive object or just referenced variables?
-        # references to inputs are better for simplicity here
+    # --- EDIT/ADD LOT DIALOG ---
+    with ui.dialog() as dialog, ui.card().classes('w-full max-w-4xl h-[90vh]'):
         lot_id_ref = {'value': None} # Mutable to store ID
         qp_id_ref = {'value': None}  # Track if we are editing a fraction
         
@@ -23,7 +20,6 @@ def lots_page():
             tab_fractions = ui.tab('Quote-Parts (Fractions)')
         
         with ui.tab_panels(tabs, value=tab_general).classes('w-full flex-grow'):
-            
             # --- TAB GENERAL ---
             with ui.tab_panel(tab_general):
                 name = ui.input('Nom (ex: Appartement A1)')
@@ -31,20 +27,20 @@ def lots_page():
                 desc = ui.textarea('Description')
                 
                 def save_general():
-                     with next(get_session()) as session:
-                         if lot_id_ref['value']:
-                             lot = session.get(Lot, lot_id_ref['value'])
-                             lot.name = name.value
-                             lot.type = l_type.value
-                             lot.description = desc.value
-                         else:
-                             lot = Lot(name=name.value, type=l_type.value, description=desc.value)
-                             session.add(lot)
-                         session.commit()
-                         lot_id_ref['value'] = lot.id # Set ID for subsections
-                         ui.notify('Lot enregistré')
-                         refresh_main_table()
-                         refresh_fractions_table() # Enable fractions tab content if needed
+                    with next(get_session()) as session:
+                        if lot_id_ref['value']:
+                            lot = session.get(Lot, lot_id_ref['value'])
+                            lot.name = name.value
+                            lot.type = l_type.value
+                            lot.description = desc.value
+                        else:
+                            lot = Lot(name=name.value, type=l_type.value, description=desc.value)
+                            session.add(lot)
+                        session.commit()
+                        lot_id_ref['value'] = lot.id # Set ID for subsections
+                        ui.notify('Lot enregistré')
+                        refresh_main_table_func()
+                        refresh_fractions_table() # Enable fractions tab content if needed
 
                 def delete_lot():
                     if not lot_id_ref['value']: return
@@ -55,24 +51,20 @@ def lots_page():
                              session.commit()
                         ui.notify('Lot supprimé')
                         dialog.close()
-                        refresh_main_table()
-                    except Exception as e:
+                        refresh_main_table_func()
+                    except Exception:
                         ui.notify("Impossible de supprimer (utilisé ailleurs ?)", type='negative')
 
                 with ui.row().classes('w-full justify-between mt-4'):
-                     # Delete button (visibility toggled in open helpers)
-                     del_lot_btn = ui.button('Supprimer', on_click=delete_lot).classes('bg-red-500 text-white')
-                     del_lot_btn.visible = False
-                     
-                     ui.button('Enregistrer Général', on_click=save_general)
+                    del_lot_btn = ui.button('Supprimer', on_click=delete_lot).classes('bg-red-500 text-white')
+                    del_lot_btn.visible = False
+                    ui.button('Enregistrer Général', on_click=save_general)
 
             # --- TAB FRACTIONS ---
             with ui.tab_panel(tab_fractions):
                 ui.label('Historique des propriétés').classes('text-lg font-bold')
                 
-                # Add Fraction Form
                 with ui.row().classes('items-end gap-2 mb-4 p-4 border rounded glass-panel'):
-                    # Load owners for dropdown
                     owners_map = {}
                     with next(get_session()) as session:
                         owners = session.exec(select(Owner)).all()
@@ -97,7 +89,6 @@ def lots_page():
                         try:
                             with next(get_session()) as session:
                                 if qp_id_ref['value']:
-                                    # UPDATE
                                     qp = session.get(QuotePart, qp_id_ref['value'])
                                     qp.owner_id = owner_select.value
                                     qp.numerator = int(num.value)
@@ -105,7 +96,6 @@ def lots_page():
                                     qp.start_date = date.fromisoformat(start_d.value)
                                     qp.end_date = date.fromisoformat(end_d.value) if end_d.value else None
                                 else:
-                                    # INSERT
                                     qp = QuotePart(
                                         lot_id=lot_id_ref['value'],
                                         owner_id=owner_select.value,
@@ -127,7 +117,6 @@ def lots_page():
                         qp_id_ref['value'] = None
                         save_frac_btn.text = 'AJOUTER'
                         cancel_frac_btn.visible = False
-                        # Reset fields (optionally?)
                         num.value = 1
                         den.value = 1000
                         start_d.value = date.today().isoformat()
@@ -153,7 +142,6 @@ def lots_page():
                             resync_lot_allocations(session, lot_id_ref['value'])
                         ui.notify('Historique synchronisé avec les nouvelles parts')
 
-                    # Needs permission check here or in parent
                     user_role = app.storage.user.get('role', UserRole.READ.value)
                     can_edit = user_role in [UserRole.WRITE.value, UserRole.ADMIN.value]
 
@@ -162,14 +150,11 @@ def lots_page():
                             save_frac_btn = ui.button('AJOUTER', on_click=save_fraction, icon='add').classes('bg-emerald-500 text-white')
                             cancel_frac_btn = ui.button('Annuler', on_click=cancel_edit_fraction).classes('bg-gray-400 text-white')
                             cancel_frac_btn.visible = False
-                            
                             ui.space()
-                            
                             ui.button('Synchroniser l\'historique', on_click=sync_history_fraction, icon='sync')\
                                 .classes('bg-amber-600 text-white')\
                                 .tooltip('Recalcule toutes les répartitions de ce lot selon les parts actuelles')
 
-                # Fractions Table
                 columns_frac = [
                     {'name': 'owner', 'label': 'Propriétaire', 'field': 'owner_name', 'align': 'left'},
                     {'name': 'fraction', 'label': 'Part', 'field': 'fraction_str', 'align': 'left'},
@@ -202,28 +187,27 @@ def lots_page():
                     table_frac.on('delete', lambda e: delete_fraction(e.args))
 
                 def refresh_fractions_table():
-                     if not lot_id_ref['value']: 
-                         table_frac.rows = []
-                         return
-                     
-                     with next(get_session()) as session:
-                         parts = session.exec(select(QuotePart).where(QuotePart.lot_id == lot_id_ref['value'])).all()
-                         rows = []
-                         for p in parts:
-                             o = session.get(Owner, p.owner_id)
-                             o_name = o.name if o else "?"
-                             rows.append({
-                                 'id': p.id,
-                                 'owner_name': o_name,
-                                 'fraction_str': f"{p.numerator} / {p.denominator}",
-                                 'dates_str': f"{p.start_date} -> {p.end_date or '...'}"
-                             })
-                         table_frac.rows = rows
-                         table_frac.update()
+                    if not lot_id_ref['value']: 
+                        table_frac.rows = []
+                        return
+                    
+                    with next(get_session()) as session:
+                        parts = session.exec(select(QuotePart).where(QuotePart.lot_id == lot_id_ref['value'])).all()
+                        rows = []
+                        for p in parts:
+                            o = session.get(Owner, p.owner_id)
+                            o_name = o.name if o else "?"
+                            rows.append({
+                                'id': p.id,
+                                'owner_name': o_name,
+                                'fraction_str': f"{p.numerator} / {p.denominator}",
+                                'dates_str': f"{p.start_date} -> {p.end_date or '...'}"
+                            })
+                        table_frac.rows = rows
+                        table_frac.update()
 
-     # --- MAIN PAGE CONTENT ---
-     def content():
-        # Check Permissions
+    # --- MAIN PAGE CONTENT ---
+    def content():
         user_role = app.storage.user.get('role', UserRole.READ.value)
         can_edit = user_role in [UserRole.WRITE.value, UserRole.ADMIN.value]
 
@@ -259,7 +243,6 @@ def lots_page():
             {'name': 'actions', 'label': 'Action', 'field': 'id'},
         ]
         
-        # Remove actions if read-only
         if not can_edit:
             columns = [c for c in columns if c['name'] != 'actions']
 
@@ -273,19 +256,17 @@ def lots_page():
             ''')
             table.on('edit', lambda e: open_edit(e.args))
         
-        def refresh_main_table():
-             with next(get_session()) as session:
-                 lots = session.exec(select(Lot)).all()
-                 table.rows = [l.model_dump() for l in lots]
-                 table.update()
-                 
-        refresh_main_table()
-        # Expose refresh logic? No need if self-contained. 
-        # But save_general calls refresh_main_table.
+        def refresh_main_table_func():
+            with next(get_session()) as session:
+                lots = session.exec(select(Lot)).all()
+                table.rows = [l.model_dump() for l in lots]
+                table.update()
+                
+        refresh_main_table_func()
         global refresh_main_table_ref
-        refresh_main_table_ref = refresh_main_table
+        refresh_main_table_ref = refresh_main_table_func
 
-     frame("Gestion des Lots", content)
+    frame("Gestion des Lots", content)
 
 refresh_main_table_ref = None
 def refresh_main_table():

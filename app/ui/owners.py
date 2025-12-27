@@ -6,14 +6,14 @@ from app.services.auth import get_password_hash
 from sqlmodel import select
 
 def owners_page():
-     # Check Permissions
-     user_role = app.storage.user.get('role', UserRole.READ.value)
-     can_edit = user_role in [UserRole.WRITE.value, UserRole.ADMIN.value]
+    # Check Permissions
+    user_role = app.storage.user.get('role', UserRole.READ.value)
+    can_edit = user_role in [UserRole.WRITE.value, UserRole.ADMIN.value]
 
-     # State for editing
-     owner_id_ref = {'value': None}
+    # State for editing
+    owner_id_ref = {'value': None}
 
-     with ui.dialog() as dialog, ui.card():
+    with ui.dialog() as dialog, ui.card():
         ui.label('Propriétaire').classes('text-xl font-bold')
         name = ui.input('Nom')
         email = ui.input('Email').classes('w-full')
@@ -23,42 +23,31 @@ def owners_page():
         password_input = ui.input('Mot de passe (Laisser vide pour ne pas changer)', password=True, password_toggle_button=True).classes('w-full')
         
         def save():
-             if not can_edit: return
-             with next(get_session()) as session:
-                 if owner_id_ref['value']:
-                     # Update
-                     # Update
-                     owner = session.get(Owner, owner_id_ref['value'])
-                     owner.name = name.value
-                     owner.email = email.value
-                     # Phone removed in previous steps or needs to be re-added if model has it. 
-                     # Checking model... Owner has phone?: 
-                     # In Step 264 I see phone input was removed? 
-                     # Wait, I removed the input in Step 378 but left the reference in save()!
-                     # I should verify if Owner model has phone. 
-                     # Domain model shows phone: Optional[str]
-                     
-                     # But UI input is gone?
-                     # Step 378 removed phone = ui.input...
-                     # So I must remove the mapping here too.
-                     owner.role = UserRole(role_select.value)
-                     if password_input.value:
-                         owner.password_hash = get_password_hash(password_input.value)
-                 else:
-                     # Insert
-                     pwd = get_password_hash(password_input.value) if password_input.value else None
-                     owner = Owner(
-                         name=name.value, 
-                         email=email.value, 
-                         role=UserRole(role_select.value),
-                         password_hash=pwd
-                     )
-                     session.add(owner)
-                 
-                 session.commit()
-                 ui.notify('Propriétaire enregistré')
-                 dialog.close()
-                 refresh_table()
+            if not can_edit: return
+            with next(get_session()) as session:
+                if owner_id_ref['value']:
+                    # Update
+                    owner = session.get(Owner, owner_id_ref['value'])
+                    owner.name = name.value
+                    owner.email = email.value
+                    owner.role = UserRole(role_select.value)
+                    if password_input.value:
+                        owner.password_hash = get_password_hash(password_input.value)
+                else:
+                    # Insert
+                    pwd = get_password_hash(password_input.value) if password_input.value else None
+                    owner = Owner(
+                        name=name.value, 
+                        email=email.value, 
+                        role=UserRole(role_select.value),
+                        password_hash=pwd
+                    )
+                    session.add(owner)
+                
+                session.commit()
+                ui.notify('Propriétaire enregistré')
+                dialog.close()
+                refresh_table()
         
         def delete_owner():
             if not owner_id_ref['value']: return
@@ -77,15 +66,15 @@ def owners_page():
             dialog.close()
 
         with ui.row().classes('w-full justify-between'):
-             del_btn = ui.button('Supprimer', on_click=delete_owner).classes('bg-red-500 text-white')
-             del_btn.visible = False
-             
-             with ui.row():
-                 ui.button('Annuler', on_click=cancel).props('flat')
-                 if can_edit:
-                     ui.button('Enregistrer', on_click=save)
+            del_btn = ui.button('Supprimer', on_click=delete_owner).classes('bg-red-500 text-white')
+            del_btn.visible = False
+            
+            with ui.row():
+                ui.button('Annuler', on_click=cancel).props('flat')
+                if can_edit:
+                    ui.button('Enregistrer', on_click=save)
 
-     def content():
+    def content():
         def open_create():
             owner_id_ref['value'] = None
             name.value = ''
@@ -103,7 +92,6 @@ def owners_page():
                 if o:
                     name.value = o.name
                     email.value = o.email
-                    # Phone removed
                     role_select.value = o.role.value
                     password_input.value = '' # Reset
                     dialog.open()
@@ -129,17 +117,17 @@ def owners_page():
             ''')
             table.on('edit', lambda e: open_edit(e.args))
 
-        def refresh_table():
-             with next(get_session()) as session:
-                 owners = session.exec(select(Owner)).all()
-                 table.rows = [o.model_dump() for o in owners]
-                 table.update()
-                 
-        refresh_table()
+        def refresh_table_func():
+            with next(get_session()) as session:
+                owners = session.exec(select(Owner)).all()
+                table.rows = [o.model_dump() for o in owners]
+                table.update()
+                
+        refresh_table_func()
         global refresh_table_ref
-        refresh_table_ref = refresh_table
+        refresh_table_ref = refresh_table_func
 
-     frame("Gestion des Propriétaires", content)
+    frame("Gestion des Propriétaires", content)
 
 refresh_table_ref = None
 def refresh_table():

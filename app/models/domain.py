@@ -25,6 +25,16 @@ class OperationCategory(str, Enum):
     REVERSEMENT = "REVERSEMENT"
     AUTRE = "AUTRE"
 
+class CategoryBase(SQLModel):
+    name: str = Field(index=True, unique=True)
+    type: OperationType = Field(default=OperationType.SORTIE)
+    is_reversement: bool = Field(default=False)
+    description: Optional[str] = None
+
+class Category(CategoryBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    operations: List["Operation"] = Relationship(back_populates="category_ref")
+
 class LotBase(SQLModel):
     name: str = Field(index=True)
     type: str = Field(default="Appartement")
@@ -75,7 +85,7 @@ class Operation(SQLModel, table=True):
     lot_id: Optional[int] = Field(default=None, foreign_key="lot.id")
     bank_account_id: int = Field(foreign_key="bankaccount.id")
     type: OperationType
-    category: OperationCategory
+    category_id: Optional[int] = Field(default=None, foreign_key="category.id")
     label: str
     amount: Decimal = Field(default=Decimal("0.00"), max_digits=14, decimal_places=2)
     paid_by_owner_id: Optional[int] = Field(default=None, foreign_key="owner.id", description="If paid by owner (Note de frais)")
@@ -83,6 +93,7 @@ class Operation(SQLModel, table=True):
 
     lot: Lot = Relationship(back_populates="operations")
     bank_account: BankAccount = Relationship(back_populates="operations")
+    category_ref: Optional[Category] = Relationship(back_populates="operations")
     allocations: List["Allocation"] = Relationship(back_populates="operation")
 
 class Allocation(SQLModel, table=True):

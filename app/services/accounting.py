@@ -106,17 +106,22 @@ def distribute_operation(session: Session, operation: Operation) -> List[Allocat
 def create_transfer(session, date_obj, amount: Decimal, from_acc_id: int, to_acc_id: int, lot_id: Optional[int], label: str):
     """
     Creates a matched pair of operations representing a transfer.
-    - Withdrawal from source account.
-    - Deposit to target account.
-    - Usually NO lot attached (pure treasury movement), so NO allocation.
     """
-    from app.models.domain import Operation, OperationType, OperationCategory, BankAccount
+    from app.models.domain import Operation, OperationType, Category, BankAccount
     
-    # Fetch names for better labels
+    # Fetch names and categories
     from_acc = session.get(BankAccount, from_acc_id)
     to_acc = session.get(BankAccount, to_acc_id)
     from_name = from_acc.name if from_acc else str(from_acc_id)
     to_name = to_acc.name if to_acc else str(to_acc_id)
+
+    # Find categories for transfers (default to AUTRE or first available if not found)
+    cat_frais = session.exec(select(Category).where(Category.name == "FRAIS_BANCAIRES")).first()
+    cat_autre = session.exec(select(Category).where(Category.name == "AUTRE")).first()
+    
+    # Fallback IDs
+    cat_id_out = cat_frais.id if cat_frais else (cat_autre.id if cat_autre else None)
+    cat_id_in = cat_autre.id if cat_autre else (cat_frais.id if cat_frais else None)
 
     # 1. Withdrawal
     op_out = Operation(
@@ -125,7 +130,7 @@ def create_transfer(session, date_obj, amount: Decimal, from_acc_id: int, to_acc
         lot_id=lot_id,
         bank_account_id=from_acc_id,
         type=OperationType.SORTIE,
-        category=OperationCategory.FRAIS_BANCAIRES, # or AUTRE
+        category_id=cat_id_out,
         label=f"Vir. vers {to_name}: {label}",
     )
     session.add(op_out)
@@ -137,7 +142,7 @@ def create_transfer(session, date_obj, amount: Decimal, from_acc_id: int, to_acc
         lot_id=lot_id,
         bank_account_id=to_acc_id,
         type=OperationType.ENTREE,
-        category=OperationCategory.AUTRE,
+        category_id=cat_id_in,
         label=f"Vir. depuis {from_name}: {label}",
     )
     session.add(op_in)

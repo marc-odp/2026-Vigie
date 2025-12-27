@@ -13,7 +13,7 @@ audit_logger.setLevel(logging.INFO)
 
 # File handler
 log_file = os.path.join(LOG_DIR, "audit.log")
-file_handler = logging.FileHandler(log_file)
+file_handler = logging.FileHandler(log_file, encoding='utf-8')
 file_handler.setLevel(logging.INFO)
 
 # Formatter

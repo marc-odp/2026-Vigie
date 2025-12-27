@@ -7,36 +7,36 @@ from decimal import Decimal
 from app.utils.formatters import format_currency
 
 def accounts_page():
-     # State
-     acc_id_ref = {'value': None}
+    # State
+    acc_id_ref = {'value': None}
 
-     with ui.dialog() as dialog, ui.card():
+    with ui.dialog() as dialog, ui.card():
         title_label = ui.label('Nouveau Compte Bancaire').classes('text-xl font-bold')
         name = ui.input('Nom (ex: Compte Courant)')
         iban = ui.input('IBAN')
         initial = ui.number('Solde Initial', value=0.0, format='%.2f')
         
         def save():
-             with next(get_session()) as session:
-                 if acc_id_ref['value']:
-                     # UPDATE
-                     acc = session.get(BankAccount, acc_id_ref['value'])
-                     acc.name = name.value
-                     acc.iban = iban.value
-                     acc.initial_balance = Decimal(str(initial.value))
-                 else:
-                     # INSERT
-                     acc = BankAccount(
-                         name=name.value, 
-                         iban=iban.value, 
-                         initial_balance=Decimal(str(initial.value))
-                     )
-                     session.add(acc)
-                 
-                 session.commit()
-                 ui.notify('Compte enregistré')
-                 dialog.close()
-                 refresh_table()
+            with next(get_session()) as session:
+                if acc_id_ref['value']:
+                    # UPDATE
+                    acc = session.get(BankAccount, acc_id_ref['value'])
+                    acc.name = name.value
+                    acc.iban = iban.value
+                    acc.initial_balance = Decimal(str(initial.value))
+                else:
+                    # INSERT
+                    acc = BankAccount(
+                        name=name.value, 
+                        iban=iban.value, 
+                        initial_balance=Decimal(str(initial.value))
+                    )
+                    session.add(acc)
+                
+                session.commit()
+                ui.notify('Compte enregistré')
+                dialog.close()
+                refresh_table_func()
 
         def delete_acc():
             if not acc_id_ref['value']: return
@@ -47,16 +47,16 @@ def accounts_page():
                     session.commit()
                 ui.notify('Compte supprimé')
                 dialog.close()
-                refresh_table()
-            except Exception as e:
+                refresh_table_func()
+            except Exception:
                 # Likely IntegrityError
                 ui.notify("Impossible de supprimer ce compte (probablement utilisé dans des opérations).", type='negative')
 
         with ui.row().classes('w-full justify-between mt-4'):
-             delete_btn = ui.button('Supprimer', on_click=delete_acc).classes('bg-red-500 text-white')
-             ui.button('Enregistrer', on_click=save)
+            delete_btn = ui.button('Supprimer', on_click=delete_acc).classes('bg-red-500 text-white')
+            ui.button('Enregistrer', on_click=save)
 
-     def content():
+    def content():
         # Check Permissions
         user_role = app.storage.user.get('role', UserRole.READ.value)
         can_edit = user_role in [UserRole.WRITE.value, UserRole.ADMIN.value]
@@ -93,7 +93,7 @@ def accounts_page():
         ]
         
         if not can_edit:
-             columns = [c for c in columns if c['name'] != 'actions']
+            columns = [c for c in columns if c['name'] != 'actions']
         
         table = ui.table(columns=columns, rows=[], pagination=10).classes('w-full glass-panel')
         
@@ -105,22 +105,24 @@ def accounts_page():
             ''')
             table.on('edit', lambda e: open_edit(e.args))
         
-        def refresh_table():
-             with next(get_session()) as session:
-                 accounts = session.exec(select(BankAccount)).all()
-                 # Convert Decimal to float/str for UI table
-                 rows = []
-                 for a in accounts:
-                     d = a.model_dump()
-                     d['initial_balance'] = format_currency(a.initial_balance)
-                     rows.append(d)
-                 table.rows = rows
-                 table.update()
-                 
-        refresh_table()
+        def refresh_table_func():
+            with next(get_session()) as session:
+                accounts = session.exec(select(BankAccount)).all()
+                # Convert Decimal to float/str for UI table
+                rows = []
+                for a in accounts:
+                    d = a.model_dump()
+                    d['initial_balance'] = format_currency(a.initial_balance)
+                    rows.append(d)
+                table.rows = rows
+                table.update()
+                
+        refresh_table_func()
         global refresh_table_account_ref
-        refresh_table_account_ref = refresh_table
+        refresh_table_account_ref = refresh_table_func
 
-     frame("Comptes Bancaires", content)
+    frame("Comptes Bancaires", content)
 
 refresh_table_account_ref = None
+def refresh_account_ui():
+    if refresh_table_account_ref: refresh_table_account_ref()

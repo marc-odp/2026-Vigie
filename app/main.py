@@ -7,6 +7,8 @@ from app.ui.lots import lots_page
 from app.ui.operations import operations_page
 from app.ui.reports import reports_page
 from app.ui.login import login_page
+from app.ui.logs import logs_page
+from app.ui.categories import categories_page
 
 # Auth Guard
 def check_auth():
@@ -54,6 +56,16 @@ def matrix():
 def reports():
     if check_auth():
         reports_page()
+
+@ui.page('/logs')
+def logs():
+    if check_auth():
+        logs_page()
+
+@ui.page('/categories')
+def categories():
+    if check_auth():
+        categories_page()
 
 import os
 from app.services.bootstrap import bootstrap_data

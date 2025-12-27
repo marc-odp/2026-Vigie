@@ -58,6 +58,25 @@ L'application est accessible sur `http://localhost:8080`.
 - Email : `admin@vigie.local`
 - Mot de passe : `vigie2026`
 
+## Qualité et Tests
+
+Pour garantir la stabilité de l'application, une suite de tests automatisés est disponible.
+
+### Lancer les tests
+
+Nous recommandons d'utiliser le script dédié qui gère l'environnement et évite les problèmes de collection dans certains environnements (WSL) :
+
+```bash
+uv run python run_tests.py
+```
+
+Vous pouvez aussi utiliser `pytest` directement :
+```bash
+PYTHONPATH=. uv run pytest tests -v
+```
+
+Consultez le fichier [tests/README.md](tests/README.md) pour plus de détails sur l'implémentation des tests.
+
 ## Architecture
 
 - **Interface** : [NiceGUI](https://nicegui.io/) (basé sur TailwindCSS & Quasar).
