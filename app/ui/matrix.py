@@ -5,7 +5,7 @@ from app.database import get_session
 from sqlmodel import select
 from collections import defaultdict
 from decimal import Decimal
-from app.utils.formatters import format_currency
+from app.utils.formatters import format_currency, short_name
 
 def matrix_page():
     """
@@ -63,7 +63,7 @@ def matrix_page():
             for o in active_owners:
                 columns.append({
                     'name': f'owner_{o.id}',
-                    'label': o.name,
+                    'label': short_name(o.name),
                     'field': f'owner_{o.id}_fmt',
                     'align': 'right',
                     'headerClasses': 'text-indigo-700 dark:text-indigo-200 bg-indigo-50 dark:bg-slate-800',
@@ -84,7 +84,7 @@ def matrix_page():
                         color = 'text-emerald-500' if val >= 0 else 'text-rose-500'
                         bg_color = 'bg-emerald-500/5' if val >= 0 else 'bg-rose-500/5'
                         with ui.row().classes(f'items-center gap-2 px-3 py-1 rounded-full {bg_color} border border-current opacity-80'):
-                            ui.label(o.name).classes('text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase')
+                            ui.label(short_name(o.name)).classes('text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase')
                             ui.label(format_currency(val, show_sign=True)).classes(f'text-xs font-bold {color}')
 
             # Main Table
