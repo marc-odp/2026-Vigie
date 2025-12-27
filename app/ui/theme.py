@@ -165,7 +165,7 @@ def frame(page_title: str, content_func: Callable):
 
     # SIDEBAR (LEFT DRAWER)
     with ui.left_drawer(value=True).classes('app-sidebar border-r border-gray-200 dark:border-slate-800 p-4 gap-2 flex flex-col') as drawer:
-        drawer.props('width=280 breakpoint=1024') # Collapses at 1024px
+        drawer.props('width=220 breakpoint=1024') # Collapses at 1024px
         
         ui.label('NAVIGATION').classes('text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-0.5 px-3 uppercase tracking-tighter')
         menu_link('Tableau de bord', '/', 'dashboard')
@@ -203,7 +203,7 @@ def frame(page_title: str, content_func: Callable):
                 ui.label('Déconnexion')
 
     # MAIN AREA
-    with ui.column().classes('w-full transition-colors duration-300 bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen pt-14'): 
-        with ui.column().classes('px-4 pb-4 pt-1 sm:px-6 sm:pb-6 sm:pt-2 overflow-y-auto page-container'):
+    with ui.column().classes('w-full transition-colors duration-300 bg-gray-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen pt-12'): 
+        with ui.column().classes('px-4 pb-4 sm:px-6 sm:pb-6 overflow-y-auto page-container'):
             ui.label(page_title).classes('text-xl sm:text-2xl font-bold mb-4 bg-gradient-to-r from-emerald-500 to-cyan-500 text-transparent bg-clip-text')
             content_func()

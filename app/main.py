@@ -70,6 +70,10 @@ def categories():
 import os
 from app.services.bootstrap import bootstrap_data
 
+# Get the project root directory
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_DIR = os.path.join(PROJECT_ROOT, 'static')
+
 def main():
     create_db_and_tables()
     bootstrap_data()
@@ -77,7 +81,16 @@ def main():
     storage_secret = os.getenv('VIGIE_STORAGE_SECRET', 'vigie_secure_key')
     port = int(os.getenv('VIGIE_PORT', 8080))
     
-    ui.run(title="Vigie", show=False, port=port, storage_secret=storage_secret)
+    # Serve static files (including favicon)
+    app.add_static_files('/static', STATIC_DIR)
+    
+    ui.run(
+        title="Vigie", 
+        show=False, 
+        port=port, 
+        storage_secret=storage_secret,
+        favicon=os.path.join(STATIC_DIR, 'favicon.png')
+    )
 
 if __name__ in {"__main__", "__mp_main__"}:
     main()
