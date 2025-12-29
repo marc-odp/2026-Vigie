@@ -36,7 +36,7 @@ def accounts_page():
                 session.commit()
                 ui.notify('Compte enregistré')
                 dialog.close()
-                refresh_table_func()
+                refresh_account_ui()
 
         def delete_acc():
             if not acc_id_ref['value']: return
@@ -47,7 +47,7 @@ def accounts_page():
                     session.commit()
                 ui.notify('Compte supprimé')
                 dialog.close()
-                refresh_table_func()
+                refresh_account_ui()
             except Exception:
                 # Likely IntegrityError
                 ui.notify("Impossible de supprimer ce compte (probablement utilisé dans des opérations).", type='negative')
