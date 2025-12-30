@@ -1,8 +1,19 @@
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlmodel import SQLModel, create_engine, Session
 
-sqlite_data_dir = os.getenv("VIGIE_DATA_DIR", "/app/data")
+# Charger le fichier .env depuis la racine du projet
+project_root = Path(__file__).parent.parent
+load_dotenv(project_root / ".env")
+
+# Utiliser le répertoire du projet par défaut si non défini
+default_data_dir = str(project_root)
+sqlite_data_dir = os.getenv("VIGIE_DATA_DIR", default_data_dir)
+# Convertir "." en chemin absolu
+if sqlite_data_dir == ".":
+    sqlite_data_dir = str(project_root)
 sqlite_url = f"sqlite:///{sqlite_data_dir}/vigie.db"
 
 # Enable WAL mode and busy_timeout for concurrency

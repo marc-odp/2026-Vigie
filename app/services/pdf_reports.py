@@ -123,14 +123,14 @@ def generate_owner_annual_report(session: Session, owner_id: int, year: int) -> 
     # --- Bloc Résumé (Premium) ---
     net_balance = total_income - total_expense
     
-    # Background
+    # Background - bloc plus compact (30mm au lieu de 40mm)
     curr_y = pdf.get_y()
     pdf.set_fill_color(248, 250, 252) # Slate 50
-    pdf.rect(10, curr_y, 190, 40, "F")
+    pdf.rect(10, curr_y, 190, 28, "F")
     pdf.set_draw_color(226, 232, 240) # Slate 200
-    pdf.rect(10, curr_y, 190, 40, "D")
+    pdf.rect(10, curr_y, 190, 28, "D")
     
-    pdf.set_xy(15, curr_y + 5)
+    pdf.set_xy(15, curr_y + 3)
     pdf.set_font(pdf.font_family_main, "B", 10)
     pdf.set_text_color(100, 116, 139) # Slate 500
     pdf.cell(60, 6, "TOTAL REVENUS")
@@ -149,27 +149,28 @@ def generate_owner_annual_report(session: Session, owner_id: int, year: int) -> 
     pdf.set_text_color(*color)
     pdf.cell(60, 10, format_currency(net_balance, show_sign=True), ln=True)
     
-    pdf.set_y(curr_y + 45)
+    pdf.set_y(curr_y + 32)  # Espacement réduit après le bloc
 
     # --- Tableau des Opérations ---
     pdf.set_font(pdf.font_family_main, "B", 12)
     pdf.set_text_color(30, 41, 59)
     pdf.cell(0, 10, "Détail des Opérations", ln=True)
     
-    # En-tête Tableau
+    # En-tête Tableau (police réduite pour plus d'espace)
     pdf.set_fill_color(241, 245, 249) # Slate 100
     pdf.set_draw_color(203, 213, 225) # Slate 300
     pdf.set_text_color(71, 85, 105) # Slate 600
-    pdf.set_font(pdf.font_family_main, "B", 9)
+    pdf.set_font(pdf.font_family_main, "B", 8)
     
-    pdf.cell(25, 10, "DATE", border=1, align="C", fill=True)
-    pdf.cell(70, 10, "LIBELLÉ / LOT", border=1, align="L", fill=True)
-    pdf.cell(35, 10, "CATÉGORIE", border=1, align="C", fill=True)
-    pdf.cell(60, 10, "MONTANT DE LA PART", border=1, align="R", fill=True)
+    # Colonnes ajustées: DATE 22, LIBELLÉ 90, CATÉGORIE 30, MONTANT 48 = 190
+    pdf.cell(22, 8, "DATE", border=1, align="C", fill=True)
+    pdf.cell(90, 8, "LIBELLÉ / LOT", border=1, align="L", fill=True)
+    pdf.cell(30, 8, "CATÉGORIE", border=1, align="C", fill=True)
+    pdf.cell(48, 8, "MONTANT PART", border=1, align="R", fill=True)
     pdf.ln()
 
-    # Lignes
-    pdf.set_font(pdf.font_family_main, "", 9)
+    # Lignes du tableau (police réduite pour afficher plus de texte)
+    pdf.set_font(pdf.font_family_main, "", 7)
     pdf.set_text_color(15, 23, 42)
     
     for i, d in enumerate(details):
@@ -181,15 +182,15 @@ def generate_owner_annual_report(session: Session, owner_id: int, year: int) -> 
         fill = (i % 2 == 1)
         pdf.set_fill_color(252, 253, 254) # Presque blanc pour alternance
         
-        pdf.cell(25, 8, d["date"], border="B", align="C", fill=fill)
+        pdf.cell(22, 7, d["date"], border="B", align="C", fill=fill)
         
-        # Concat libellé et lot pour gagner de la place horizontalement
+        # Concat libellé et lot - plus de caractères possibles avec police réduite
         txt = f"{d['label']} ({d['lot']})"
-        if len(txt) > 45: txt = txt[:42] + "..."
-        pdf.cell(70, 8, txt, border="B", fill=fill)
+        if len(txt) > 70: txt = txt[:67] + "..."
+        pdf.cell(90, 7, txt, border="B", fill=fill)
         
-        cat = d["category"][:20]
-        pdf.cell(35, 8, cat, border="B", align="C", fill=fill)
+        cat = d["category"][:18]
+        pdf.cell(30, 7, cat, border="B", align="C", fill=fill)
         
         if d["is_income"]:
             pdf.set_text_color(5, 150, 105)
@@ -198,7 +199,7 @@ def generate_owner_annual_report(session: Session, owner_id: int, year: int) -> 
             pdf.set_text_color(225, 29, 72)
             val = f"- {format_currency(d['amount'])}"
             
-        pdf.cell(60, 8, val, border="B", align="R", fill=fill)
+        pdf.cell(48, 7, val, border="B", align="R", fill=fill)
         pdf.set_text_color(15, 23, 42)
         pdf.ln()
 
