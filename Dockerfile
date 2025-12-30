@@ -2,12 +2,14 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY pyproject.toml .
 
-RUN mkdir reports && \
-    pip install -r requirements.txt
+RUN apt -y update && \
+    apt install -y fonts-dejavu && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install .
 
-COPY app /app/app/
-COPY static /app/static/
+COPY app app/
+COPY static static/
 
 CMD [ "python", "-m", "app.main" ]
